@@ -1,0 +1,44 @@
+name: NK-Universal-Generator-Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      panel_command:
+        description: '第一步：粘贴面板启动命令'
+        required: true
+        default: 'java -Xmx1024M -jar server.jar nogui'
+      mock_port:
+        description: '第二步：模拟端口'
+        required: true
+        default: '25565'
+      mock_mem:
+        description: '第三步：内存伪装占用 (MB)'
+        required: true
+        default: '512'
+
+jobs:
+  build_payload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Python 环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: 运行生成脚本
+        run: |
+          python generator.py "${{ github.event.inputs.panel_command }}" "${{ github.event.inputs.mock_port }}" "${{ github.event.inputs.mock_mem }}"
+
+      - name: 打包环境
+        run: |
+          cd output
+          zip -r ../nk_shadow_payload.zip ./*
+
+      - name: 上传成品包
+        uses: actions/upload-artifact@v4
+        with:
+          name: NK-Shadow-Environment
+          path: nk_shadow_payload.zip
